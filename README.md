@@ -1,6 +1,6 @@
-# react-native-nitro-gzip
+# react-native-gzip-nitro
 
-[![npm version](https://img.shields.io/npm/v/react-native-nitro-gzip.svg)](https://www.npmjs.com/package/react-native-nitro-gzip)
+[![npm version](https://img.shields.io/npm/v/react-native-gzip-nitro.svg)](https://www.npmjs.com/package/react-native-gzip-nitro)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Fast, native gzip compression and decompression for React Native, built on top of [Nitro Modules](https://nitro.margelo.com/) and [zlib](https://www.zlib.net/).
@@ -16,7 +16,7 @@ This library is a drop-in replacement for [`react-native-gzip`](https://www.npmj
 
 `react-native-gzip` works, but it goes through the old bridge: every call serializes the input/output as a string across the bridge and queues the work on the module method queue. For large payloads (think: API responses, sync uploads, log batches) that's measurable.
 
-`react-native-nitro-gzip` exposes the same two functions (`inflate` / `deflate`) over JSI via Nitro, so:
+`react-native-gzip-nitro` exposes the same two functions (`inflate` / `deflate`) over JSI via Nitro, so:
 
 - The string crosses the JS/Native boundary as a `std::string` directly — no JSON.
 - The native work runs on a Nitro background thread pool; you get a real `Promise` back.
@@ -32,9 +32,9 @@ This library is a drop-in replacement for [`react-native-gzip`](https://www.npmj
 ## Installation
 
 ```sh
-yarn add react-native-nitro-gzip react-native-nitro-modules
+yarn add react-native-gzip-nitro react-native-nitro-modules
 # or
-npm install react-native-nitro-gzip react-native-nitro-modules
+npm install react-native-gzip-nitro react-native-nitro-modules
 ```
 
 Then install pods:
@@ -50,7 +50,7 @@ That's it — autolinking handles the rest on both platforms.
 ## Usage
 
 ```ts
-import { inflate, deflate } from "react-native-nitro-gzip";
+import { inflate, deflate } from "react-native-gzip-nitro";
 
 // Compress a string -> base64 of gzip bytes
 const compressed = await deflate("Hello, world!");
@@ -117,8 +117,8 @@ The TypeScript spec is in [`src/Gzip.nitro.ts`](src/Gzip.nitro.ts); the C++ impl
 ## Building from source / contributing
 
 ```sh
-git clone https://github.com/gustavomts/react-native-nitro-gzip.git
-cd react-native-nitro-gzip
+git clone https://github.com/gustavomts/react-native-gzip-nitro.git
+cd react-native-gzip-nitro
 yarn install
 yarn test          # runs the JS-level inflate/deflate tests
 yarn specs         # regenerates the Nitrogen bindings if you edit Gzip.nitro.ts
@@ -129,7 +129,7 @@ To test inside an app, point your `package.json` at a local checkout:
 ```json
 {
   "dependencies": {
-    "react-native-nitro-gzip": "file:../react-native-nitro-gzip"
+    "react-native-gzip-nitro": "file:../react-native-gzip-nitro"
   }
 }
 ```
@@ -151,7 +151,7 @@ The exported function names and signatures match `react-native-gzip` (`deflate`/
 
 ```diff
 - import { deflate, inflate } from "react-native-gzip";
-+ import { deflate, inflate } from "react-native-nitro-gzip";
++ import { deflate, inflate } from "react-native-gzip-nitro";
 ```
 
 The output bytes are byte-compatible: gzip with a standard 32 KB window, default compression level. Anything that decompresses `react-native-gzip`'s output will decompress this library's output, and vice versa.

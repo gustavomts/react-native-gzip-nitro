@@ -1,5 +1,5 @@
 {
-  "name": "react-native-nitro-gzip",
+  "name": "react-native-gzip-nitro",
   "version": "0.1.0",
   "description": "Fast gzip (inflate/deflate) for React Native via Nitro Modules and zlib (C++/JSI). Drop-in replacement for react-native-gzip.",
   "main": "src/index.ts",
@@ -40,14 +40,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gustavomts/react-native-nitro-gzip.git"
+    "url": "git+https://github.com/gustavomts/react-native-gzip-nitro.git"
   },
   "author": "Gustavo Aires <gustavoairesmatos@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gustavomts/react-native-nitro-gzip/issues"
+    "url": "https://github.com/gustavomts/react-native-gzip-nitro/issues"
   },
-  "homepage": "https://github.com/gustavomts/react-native-nitro-gzip#readme",
+  "homepage": "https://github.com/gustavomts/react-native-gzip-nitro#readme",
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
