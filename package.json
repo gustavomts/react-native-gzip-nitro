@@ -1,0 +1,73 @@
+{
+  "name": "react-native-nitro-gzip",
+  "version": "0.1.0",
+  "description": "Fast gzip (inflate/deflate) for React Native via Nitro Modules and zlib (C++/JSI). Drop-in replacement for react-native-gzip.",
+  "main": "src/index.ts",
+  "react-native": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "react-native.config.js",
+    "android/build.gradle",
+    "android/gradle.properties",
+    "android/CMakeLists.txt",
+    "android/src",
+    "ios",
+    "cpp",
+    "nitrogen",
+    "nitro.json",
+    "*.podspec",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "specs": "nitrogen --logLevel=\"debug\"",
+    "test": "jest"
+  },
+  "keywords": [
+    "react-native",
+    "nitro",
+    "nitro-modules",
+    "gzip",
+    "zlib",
+    "compression",
+    "deflate",
+    "inflate",
+    "ios",
+    "android",
+    "jsi",
+    "c++"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gustavomts/react-native-nitro-gzip.git"
+  },
+  "author": "Gustavo Aires <gustavoairesmatos@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gustavomts/react-native-nitro-gzip/issues"
+  },
+  "homepage": "https://github.com/gustavomts/react-native-nitro-gzip#readme",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-nitro-modules": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "nitrogen": "^0.35.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/__tests__/**/*.test.ts"
+    ],
+    "moduleNameMapper": {
+      "^react-native-nitro-modules$": "<rootDir>/__tests__/__mocks__/react-native-nitro-modules.ts"
+    }
+  }
+}

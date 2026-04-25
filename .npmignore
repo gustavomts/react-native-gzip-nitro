@@ -1,0 +1,15 @@
+__tests__/
+.github/
+android/build/
+android/.cxx/
+android/.gradle/
+ios/build/
+ios/Pods/
+node_modules/
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/
+jest.config.*
+tsconfig.json
