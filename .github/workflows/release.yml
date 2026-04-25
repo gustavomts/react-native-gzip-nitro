@@ -10,6 +10,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     steps:
       - uses: actions/checkout@v6
 
@@ -39,3 +40,19 @@ jobs:
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Reconfigure registry for GitHub Packages
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+          registry-url: https://npm.pkg.github.com
+          scope: "@gustavomts"
+
+      - name: Rewrite package name for GitHub Packages
+        run: |
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.name='@gustavomts/react-native-gzip-nitro';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
+
+      - name: Publish to GitHub Packages
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
