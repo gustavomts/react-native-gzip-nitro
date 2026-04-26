@@ -11,6 +11,7 @@ This library is a drop-in replacement for [`react-native-gzip`](https://www.npmj
 - Runs the actual compression on a **background thread** so the JS thread stays free.
 - Ships a small, dependency-free native core (`zlib` + a tiny inline base64 codec — no third-party native deps).
 - Works on both **iOS** and **Android**, with the **New Architecture** (Fabric/TurboModules) enabled.
+- Includes **batch APIs** (`inflateBatch` / `deflateBatch`) that fan a single JS call out across multiple native worker threads — ideal for hot paths that (de)compress many payloads back-to-back.
 
 ## Why?
 
@@ -50,7 +51,7 @@ That's it — autolinking handles the rest on both platforms.
 ## Usage
 
 ```ts
-import { inflate, deflate } from "react-native-gzip-nitro";
+import { inflate, deflate, inflateBatch, deflateBatch } from "react-native-gzip-nitro";
 
 // Compress a string -> base64 of gzip bytes
 const compressed = await deflate("Hello, world!");
@@ -59,6 +60,12 @@ console.log(compressed); // e.g. "H4sIAAAAAAAAA/NIzcnJ1w..."
 // Decompress base64-encoded gzip back to the original UTF-8 string
 const original = await inflate(compressed);
 console.log(original); // "Hello, world!"
+
+// Process many payloads in a single native call, in parallel
+const payloads = ["a", "b", "c"];
+const compressedBatch = await deflateBatch(payloads);
+const originals = await inflateBatch(compressedBatch);
+console.log(originals); // ["a", "b", "c"]
 ```
 
 ### API
@@ -78,13 +85,32 @@ Decompresses a base64-encoded gzip (or zlib) payload and returns the original UT
 - Whitespace inside the base64 input (newlines, CR, spaces, tabs) is tolerated.
 - Runs on a background thread.
 
+#### `deflateBatch(items: string[]): Promise<string[]>`
+
+Gzip-compresses an array of UTF-8 strings in a single native call and returns the base64-encoded results in the same order as the input.
+
+- Items are dispatched across native worker threads (capped at `std::thread::hardware_concurrency()`), so a batch of N items completes roughly in `ceil(N / cores)` × per-item time instead of `N ×` per-item time.
+- An empty array resolves to an empty array.
+- **Fail-fast:** if any item throws, the whole batch rejects with the first error encountered.
+
+#### `inflateBatch(items: string[]): Promise<string[]>`
+
+Decompresses an array of base64-encoded gzip (or zlib) payloads in a single native call and returns the UTF-8 strings in the same order as the input.
+
+- Same parallel-execution and fail-fast semantics as `deflateBatch`.
+- Each item independently auto-detects gzip vs. zlib framing, so a mixed batch is fine.
+
+The batch APIs are best when you have ≥2 payloads to (de)compress at once: you amortize the JSI hop across all of them and exploit multiple cores. For a single payload, prefer `inflate` / `deflate` — there's no parallelism win, and you skip allocating a 1-element array.
+
 #### Errors
 
-Both functions reject the returned promise with a JS `Error` if:
+`inflate` / `deflate` (and each item inside `inflateBatch` / `deflateBatch`) reject the returned promise with a JS `Error` if:
 
 - the base64 input contains an invalid character (`inflate`),
 - the gzip stream is truncated or corrupted (`inflate`),
 - zlib fails to initialize (`Z_MEM_ERROR`, etc.).
+
+For the batch variants, the first error wins and the whole promise rejects — successfully processed items are discarded.
 
 ```ts
 try {
@@ -155,6 +181,8 @@ The exported function names and signatures match `react-native-gzip` (`deflate`/
 ```
 
 The output bytes are byte-compatible: gzip with a standard 32 KB window, default compression level. Anything that decompresses `react-native-gzip`'s output will decompress this library's output, and vice versa.
+
+`inflateBatch` / `deflateBatch` are additive — they have no equivalent in `react-native-gzip` and don't change the behavior of the single-payload functions.
 
 ## License
 
