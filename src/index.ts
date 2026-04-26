@@ -17,3 +17,21 @@ export function inflate(base64: string): Promise<string> {
 export function deflate(data: string): Promise<string> {
     return Gzip.deflate(data);
 }
+
+/**
+ * Decompress an array of gzip-compressed, base64-encoded payloads in a single
+ * native call. Items are processed in parallel on native worker threads and
+ * results are returned in the same order. Rejects on the first failure.
+ */
+export function inflateBatch(items: string[]): Promise<string[]> {
+    return Gzip.inflateBatch(items);
+}
+
+/**
+ * Gzip-compress an array of UTF-8 strings in a single native call. Items are
+ * processed in parallel on native worker threads and base64 results are
+ * returned in the same order. Rejects on the first failure.
+ */
+export function deflateBatch(items: string[]): Promise<string[]> {
+    return Gzip.deflateBatch(items);
+}

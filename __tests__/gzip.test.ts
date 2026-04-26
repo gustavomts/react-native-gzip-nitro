@@ -1,6 +1,6 @@
 import { deflateSync as zlibDeflate, gunzipSync, gzipSync } from "zlib";
 
-import { deflate, inflate } from "../src";
+import { deflate, deflateBatch, inflate, inflateBatch } from "../src";
 
 describe("react-native-nitro-gzip", () => {
     describe("deflate", () => {
@@ -73,6 +73,41 @@ describe("react-native-nitro-gzip", () => {
             const tampered = Buffer.from(ok);
             tampered[tampered.length - 5] ^= 0xff;
             await expect(inflate(tampered.toString("base64"))).rejects.toThrow(/zlib|inflate/i);
+        });
+    });
+
+    describe("batch", () => {
+        it("deflateBatch + inflateBatch round-trips and preserves order", async () => {
+            const inputs = [
+                "",
+                "hello",
+                "🚜 HeavyConnect — café 测试 αβγ",
+                JSON.stringify({ a: 1, b: [1, 2, 3] }),
+                "abcdef".repeat(20_000),
+            ];
+            const compressed = await deflateBatch(inputs);
+            expect(compressed).toHaveLength(inputs.length);
+            const out = await inflateBatch(compressed);
+            expect(out).toEqual(inputs);
+        });
+
+        it("returns an empty array for an empty batch", async () => {
+            await expect(deflateBatch([])).resolves.toEqual([]);
+            await expect(inflateBatch([])).resolves.toEqual([]);
+        });
+
+        it("inflateBatch matches per-item inflate output", async () => {
+            const payloads = ["one", "two", "three"].map((s) =>
+                gzipSync(Buffer.from(s, "utf8")).toString("base64"),
+            );
+            const batch = await inflateBatch(payloads);
+            const single = await Promise.all(payloads.map((p) => inflate(p)));
+            expect(batch).toEqual(single);
+        });
+
+        it("inflateBatch rejects when any item is invalid (fail-fast)", async () => {
+            const good = gzipSync(Buffer.from("ok", "utf8")).toString("base64");
+            await expect(inflateBatch([good, "!!!not-base64!!!", good])).rejects.toThrow(/base64/i);
         });
     });
 

@@ -17,6 +17,7 @@
 
 #include <string>
 #include <NitroModules/Promise.hpp>
+#include <vector>
 
 namespace margelo::nitro::nitrogzip {
 
@@ -51,6 +52,8 @@ namespace margelo::nitro::nitrogzip {
       // Methods
       virtual std::shared_ptr<Promise<std::string>> inflate(const std::string& base64) = 0;
       virtual std::shared_ptr<Promise<std::string>> deflate(const std::string& data) = 0;
+      virtual std::shared_ptr<Promise<std::vector<std::string>>> inflateBatch(const std::vector<std::string>& items) = 0;
+      virtual std::shared_ptr<Promise<std::vector<std::string>>> deflateBatch(const std::vector<std::string>& items) = 0;
 
     protected:
       // Hybrid Setup

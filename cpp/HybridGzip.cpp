@@ -1,9 +1,14 @@
 #include "HybridGzip.hpp"
 
+#include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdint>
+#include <exception>
+#include <future>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 #include <zlib.h>
 
@@ -139,19 +144,81 @@ std::vector<uint8_t> gzipDeflate(const std::string& input) {
     return out;
 }
 
+std::string inflateOne(const std::string& base64) {
+    auto compressed = base64Decode(base64);
+    return gzipInflate(compressed);
+}
+
+std::string deflateOne(const std::string& data) {
+    auto compressed = gzipDeflate(data);
+    return base64Encode(compressed.data(), compressed.size());
+}
+
+template <typename Fn>
+std::vector<std::string> runBatchParallel(const std::vector<std::string>& items, Fn&& fn) {
+    const size_t n = items.size();
+    std::vector<std::string> results(n);
+    if (n == 0) return results;
+    if (n == 1) {
+        results[0] = fn(items[0]);
+        return results;
+    }
+
+    // Cap concurrency to avoid spawning a thread per item on huge batches.
+    unsigned int hw = std::thread::hardware_concurrency();
+    if (hw == 0) hw = 4;
+    const size_t maxWorkers = std::min<size_t>(n, hw);
+
+    std::vector<std::future<void>> futures;
+    futures.reserve(maxWorkers);
+
+    std::atomic<size_t> next{0};
+    for (size_t w = 0; w < maxWorkers; ++w) {
+        futures.emplace_back(std::async(std::launch::async, [&]() {
+            for (;;) {
+                size_t i = next.fetch_add(1, std::memory_order_relaxed);
+                if (i >= n) return;
+                results[i] = fn(items[i]);
+            }
+        }));
+    }
+
+    // Re-throw the first exception encountered, if any (fail-fast for the batch).
+    std::exception_ptr firstError;
+    for (auto& f : futures) {
+        try {
+            f.get();
+        } catch (...) {
+            if (!firstError) firstError = std::current_exception();
+        }
+    }
+    if (firstError) std::rethrow_exception(firstError);
+    return results;
+}
+
 } // namespace
 
 std::shared_ptr<Promise<std::string>> HybridGzip::inflate(const std::string& base64) {
     return Promise<std::string>::async([base64]() -> std::string {
-        auto compressed = base64Decode(base64);
-        return gzipInflate(compressed);
+        return inflateOne(base64);
     });
 }
 
 std::shared_ptr<Promise<std::string>> HybridGzip::deflate(const std::string& data) {
     return Promise<std::string>::async([data]() -> std::string {
-        auto compressed = gzipDeflate(data);
-        return base64Encode(compressed.data(), compressed.size());
+        return deflateOne(data);
+    });
+}
+
+std::shared_ptr<Promise<std::vector<std::string>>> HybridGzip::inflateBatch(const std::vector<std::string>& items) {
+    return Promise<std::vector<std::string>>::async([items]() -> std::vector<std::string> {
+        return runBatchParallel(items, [](const std::string& s) { return inflateOne(s); });
+    });
+}
+
+std::shared_ptr<Promise<std::vector<std::string>>> HybridGzip::deflateBatch(const std::vector<std::string>& items) {
+    return Promise<std::vector<std::string>>::async([items]() -> std::vector<std::string> {
+        return runBatchParallel(items, [](const std::string& s) { return deflateOne(s); });
     });
 }
 

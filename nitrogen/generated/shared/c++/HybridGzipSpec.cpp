@@ -16,6 +16,8 @@ namespace margelo::nitro::nitrogzip {
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridMethod("inflate", &HybridGzipSpec::inflate);
       prototype.registerHybridMethod("deflate", &HybridGzipSpec::deflate);
+      prototype.registerHybridMethod("inflateBatch", &HybridGzipSpec::inflateBatch);
+      prototype.registerHybridMethod("deflateBatch", &HybridGzipSpec::deflateBatch);
     });
   }
 

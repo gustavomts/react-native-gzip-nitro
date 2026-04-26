@@ -11,7 +11,7 @@ import { gunzipSync, gzipSync, inflateSync as zlibInflateSync } from "zlib";
  * JS API can be exercised by Jest without a real device.
  */
 function createGzipHybrid() {
-    return {
+    const hybrid = {
         async inflate(base64: string): Promise<string> {
             // Strip whitespace just like the C++ base64 decoder does.
             const cleaned = base64.replace(/[\s]/g, "");
@@ -48,7 +48,17 @@ function createGzipHybrid() {
             const compressed = gzipSync(Buffer.from(data, "utf8"));
             return compressed.toString("base64");
         },
+
+        async inflateBatch(items: string[]): Promise<string[]> {
+            // Mirror the C++ behavior: process all items, fail-fast on first error.
+            return Promise.all(items.map((item) => hybrid.inflate(item)));
+        },
+
+        async deflateBatch(items: string[]): Promise<string[]> {
+            return Promise.all(items.map((item) => hybrid.deflate(item)));
+        },
     };
+    return hybrid;
 }
 
 export const NitroModules = {

@@ -1,6 +1,6 @@
 {
   "name": "react-native-gzip-nitro",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fast gzip (inflate/deflate) for React Native via Nitro Modules and zlib (C++/JSI). Drop-in replacement for react-native-gzip.",
   "main": "src/index.ts",
   "react-native": "src/index.ts",
